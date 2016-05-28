@@ -3,29 +3,42 @@
 <body>
 <h1>Chat</h1>
 <div id="chat"></div>
-<input id="msg" type="text">
+<div id="msg" contenteditable="true" ></div>
+<div id="smiles">
+
+</div>
 <style>
-input { border: 1px solid green; }
+#msg { border: 1px solid green;width: 100%;height: 100px; }
+#smiles {border: 1px solid green; position: relative;top:40px;}
 </style>
 <script>
 
   var chat = document.getElementById('chat'),
-      msg = document.getElementById('msg');
+      msg = document.getElementById('msg'),
+      smiles = document.getElementById('smiles');
   msg.focus();
+
 
   msg.addEventListener('keydown', function(event) {
     if (event.keyCode === 13) {
-      var s = msg.value;
-      msg.value = '';
+      var s = msg.innerHTML;
+      alert('innerHTML when keydown '+ msg);
+      msg.innerHTML = '';
       writeLine(s);
       socket.send(s);
     }
   });
 
   function writeLine(text) {
+    alert(text);
     var line = document.createElement('div');
     line.innerHTML = '<p>' + text + '</p>';
     chat.appendChild(line);
+  }
+
+  function appendSmile(event){
+    msg.innerHTML = '<span>'+msg.innerHTML+'</span>';
+    msg.appendChild(event.target.cloneNode(true));
   }
 
   var socket = new WebSocket('ws://127.0.0.1/chat');
@@ -39,8 +52,19 @@ input { border: 1px solid green; }
   };
 
   socket.onmessage = function(event) {
-    writeLine(event.data);
+    var data = JSON.parse(event.data);
+    if(data.id === "text"){
+      writeLine(data.msg);
+    }else{
+      var smileImg = new Image();
+      smileImg.id  = data.id;
+      smileImg.src = 'data:image/png;base64,'+data.img;
+      smileImg.alt = data.id;
+      smileImg.addEventListener("click",appendSmile);
+      smiles.appendChild(smileImg);
+    }
   };
+
 
 </script>
 </body>

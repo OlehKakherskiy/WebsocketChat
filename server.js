@@ -25,13 +25,15 @@ ws.on('request', function(req) {
   var connection = req.accept('', req.origin);
   clients.push(connection);
   console.log('Connected ' + connection.remoteAddress);
+  sendSmileImgs(connection);
   connection.on('message', function(message) {
     var dataName = message.type + 'Data',
         data = message[dataName];
     console.log('Received: ' + data);
+    var response = JSON.stringify({id:'text', msg:data});
     clients.forEach(function(client) {
       if (connection !== client) {
-        client.send(data);
+        client.send(response);
       }
     });
   });
@@ -39,3 +41,16 @@ ws.on('request', function(req) {
     console.log('Disconnected ' + connection.remoteAddress);
   });
 });
+
+var sendSmileImgs = function(connection){
+  var smiles = api.fs.readdirSync("./smiles");
+  console.log(smiles);
+  smiles.forEach(function(fileName){
+    var smile = 
+    {
+      id:fileName.split(/\./)[0],
+      img:api.fs.readFileSync("./smiles/"+fileName,'base64')
+    };
+    connection.send(JSON.stringify(smile));
+  });
+}
